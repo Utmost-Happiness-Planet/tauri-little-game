@@ -1,69 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-  </head>
-  <body align="center">
-    <h1>打败小怪兽</h1>
-    <img src="assets/monster.png"></img><br>
-    <div id="health">?/?</div>
-    <button id="attack">攻击</button><br>
-    <div id="log"></div>
-  </body>
-  <script>
-    let {invoke} = window.__TAURI__.tauri
 
-    let total_health = 100
-    let remain_health = total_health
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+</head>
 
-    let health_div = document.getElementById("health")
-    let log = document.getElementById("log")
-
-    let attack_text = [
-      "你发动了平平无奇的攻击，怪物剩余血量：",
-      "你一个滑铲，怪物剩余血量：",
-      "你拿起宝剑跳劈，怪物剩余血量：",
-      "你对怪物使用刺拳，怪物剩余血量：",
-      "你对怪物使用了精神攻击，怪物剩余血量："
-    ]
-
-    function update_health(){
-      health_div.innerText = remain_health + "/" + total_health
-    }
-    update_health()
-
-    function update_log(code) {
-      if (code == 0) {
-        log.innerText += "你遇到了怪兽！\n"
+<body align="center">
+  <h1>打败小怪兽</h1>
+  <img src="assets/monster.png"></img><br>
+  <div id="health">?/?</div>
+  <button id="attack" onclick="attack()">攻击</button><br>
+  <div id="log"></div>
+</body>
+<script>
+  const { invoke } = window.__TAURI__.tauri
+  const health_div = document.getElementById("health")
+  const log = document.getElementById("log")
+  const attack = () => {
+    invoke("attack", { "health": health_div.innerText }).then((res) => {
+      log.innerText += res[0] + '\n'
+      health_div.innerText = res[1]
+      if (res[1] === "") {
+        invoke("save_log", { "log": log.innerText })
       }
-      else if (code == 1) {
-        log.innerText += attack_text[Math.floor(Math.random() * attack_text.length)] + health_div.innerText + "\n"
-      }
-      else if (code == 2) {
-        log.innerText += "费尽千辛万苦，你终于打怪了小怪兽！\n" + "**日志保存于当前目录下**"
-      }
-    }
-    update_log(0)
+    })
+  }
+</script>
 
-    document.getElementById("attack").onclick = function() {
-      let damage = Math.round(Math.random()*10)
-      remain_health -= damage
-      update_health()
-      update_log(1)
-      if (remain_health <= 0) {
-        document.getElementById("attack").setAttribute("disabled", true)
-        health_div.innerText = "已击败"
-        update_log(2)
-        invoke("save_log", {"log": log.innerText}).then((res)=>{
-          if (res) {
-            console.log("日志已保存")
-          } else {
-            console.log("日志报错失败")
-          }
-        })
-      }
-    }
-  </script>
 </html>
